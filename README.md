@@ -18,10 +18,11 @@ _R/I/M_
 	- 1 = immediate
 	- 2 = memory
 
-_Register_
+_REGISTER_
 	- only present if the R/I/M field designates that the operand is a register 
 	- a number between 0 and 31 determining which register r00-r31 is used
-_Memory_
+
+_MEMORY_
 	- a memory address
 	- 4B possible addresses == 4GB of memory
 
