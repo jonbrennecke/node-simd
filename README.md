@@ -1,7 +1,7 @@
 Virtue
 ===
 
-####Pseudo-SIMD Instruction bytecode serialization schema
+####Instruction serialization schema
 
 This is a "Pseudo-SIMD" instruction set in that it embodies the definition of Singular Instruction Multiple Data.  However the serialized instructions bear no resembelance to actual SIMD instructions whatsoever.
 
