@@ -25,26 +25,6 @@ _Memory_
 	- a memory address
 	- 4B possible addresses == 4GB of memory
 
-Initialization lists:
-
-Since the assembler is vector-valued, it is possible for several immediate values to be passed.
-Therefore, if the R/I/M field designated that the operand is an immediate value, the first value 
-to follow is an integer describing the number of immediate values.
-
-Lists		
-	- a 32 bit integer
-
- Immediate		
-	- a constant value (integer or floating point number). 
-	- integers are always promoted to floating point numbers of the specified precision
-	- 
-
- 
-| xxxxxx | xx    | xxxxx | xxxxx... | xxxxx... | xxxxx...            |
-| ~~~~~~ | ~~~~~ | ~~~~~ | ~~~~~~~~ | ~~~~~~~~ | ~~~~~~~~~~~~~~~~~~~ |
-| 6      | 2     | 5     | 32       | 32       | sizeof(precision_t) |
-| opcode | r/i/m | reg   | mem      | list     | imm                 |
-
 
 Operand/Opcode Lookup Table
 ===
@@ -53,17 +33,17 @@ Operand/Opcode Lookup Table
 The only parameter to push may be any register, memory or immediate value to be placed on the top of the stack.
 
 ```
-push_imm
-push_mem
-push_reg
+push_imm - opcode 0
+push_mem - opcode 1
+push_reg - opcode 2
 ```
 
 ####pop
 Pop always takes a register as the first operand; the second operand may be any register, memory or immediate value designating the size to pop off the stack.
 ```
-pop_reg_imm
-pop_reg_mem
-pop_reg_reg
+pop_reg_imm - opcode 3
+pop_reg_mem - opcode 4
+pop_reg_reg - opcode 5
 ```
 
 
