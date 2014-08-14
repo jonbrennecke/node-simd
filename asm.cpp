@@ -1,13 +1,9 @@
-#include <iostream>
-#include <fstream>
-#include <stdio.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <stdarg.h>
-#include <ctype.h>
+#include "virtue.h"
+#include <fstream> // for file IO, this is about the only C++ feature that's being used here
+#include <ctype.h> // for isdigit()
 
-// set this to float or long double to change the precision of calculations
-typedef double precision_t;
+#define DDREF(ptr) *(*ptr) /* double reference a pointer */
+
 
 // lexer token types
 enum token_t
@@ -15,7 +11,7 @@ enum token_t
 	WORD,
 	INTEGER,
 	FLOAT,
-	END = -1,
+	HALT,
 	COMMA,
 	DOT,
 	SEMI,
@@ -25,11 +21,34 @@ enum token_t
 	NUMBER
 };
 
+enum operation_t
+{
+	MOV,
+	PUSH,
+	POP,
+	NONE
+};
+
 struct Token
 {
 	token_t type;
 	char* str;
 };
+
+operation_t str2op( char* str )
+{
+	if (!strcmp(str,"mov"))
+		return MOV;
+	else if (!strcmp(str,"push"))
+		return PUSH;
+	else if (!strcmp(str,"pop"))
+		return POP;
+	else return NONE;
+}
+
+
+
+
 
 // the general purpose floating point registers are r01-r31
 const char* registers[] = {
@@ -48,69 +67,63 @@ const char* registers[] = {
  *
  *
  */
-static Token* getNextToken( const char** stream_ptr )
+static void getNextToken( const char** stream, Token* token )
 {
-	auto token = new Token();
-	const char* stream = *stream_ptr;
-	const char* start = stream;
+	const char* start = *stream;
 
 	// end of file
-	if (!stream || !*stream)
+	if (!stream || !DDREF(stream))
 	{
-		token->type = END;
-		return token;
+		token->type = HALT;
+		token->str  = (char*)"\n";
+		return;
 	}
 
 	// ignore whitespaces
-	while (*stream == ' ' || *stream == '\t' )
+	while ( DDREF(stream) == ' ' || DDREF(stream) == '\t' )
 	{
-		stream++; start++;
+		start++;
+		(*stream)++;
 	}
-
 
 	// At minimum, one char is consumed,
 	// The one char is read into the token string and the stream pointer is advnaced by 1
 	token->str = (char*)malloc(sizeof(char));
-	strncpy(token->str,stream,1);
-	(*stream_ptr)++;
+	strncpy(token->str,start,1);
+	(*stream)++;
 
-	if (*stream == '.') { token->type = DOT; return token; }
-	if (*stream == ',') { token->type = COMMA; return token; }
-	if (*stream == ';') { token->type = SEMI; return token; }
-	if (*stream == ':') { token->type = COLON; return token; }
-	if (*stream == '\n' || *stream == '\r' ) { token->type = ENDL; return token; }
+	if ( *start == '.') { token->type = DOT; return; }
+	if ( *start == ',') { token->type = COMMA; return; }
+	if ( *start == ';') { token->type = SEMI; return; }
+	if ( *start == ':') { token->type = COLON; return; }
+	if ( *start == '\n' || DDREF(stream) == '\r' ) { token->type = ENDL; return; }
 
-	// 
+	// assume WORD but check for NUMBER
 	token->type = WORD;
-
-	if ( isdigit(*stream) )
+	if ( isdigit( DDREF(stream) ) )
 		token->type = NUMBER;
 
 	// read an alphanumeric WORD or NUMBER
-	while ( *stream != ',' 
-		&& *stream != ';' && *stream != ':' 
-		&& *stream != ' ' && *stream != '\t' 
-		&& *stream != '\n' && stream && *stream )
+	while ( *stream && DDREF(stream)
+		&& DDREF(stream) != ';' && DDREF(stream) != ':' 
+		&& DDREF(stream) != ' ' && DDREF(stream) != '\t' 
+		&& DDREF(stream) != '\n' && DDREF(stream) != ',' )
 	{
 		// increment the stream by one char
-		stream++;
+		(*stream)++;
 	}
 
-	size_t dist = stream - start;
-	strncpy(token->str,stream,1);
+	size_t dist = *stream - start;
 	token->str = (char*)realloc( token->str, dist * sizeof(char));
-	strncpy( token->str, start, dist );
-
-	// advance the stream pointer 
-	*stream_ptr = stream;
-
-	return token;
+	strncpy(token->str,start,dist );
+	return;
 }
 
-static const uint8_t toOpcode( uint8_t inst, uint8_t* operands, size_t argc, ... )
-{
-	return 0;
-}
+// TODO
+// static const uint8_t toOpcode( uint8_t inst, uint8_t* operands, size_t argc, ... )
+// {
+// 	return 0;
+// }
 
 /**
  *
@@ -119,10 +132,17 @@ static const uint8_t toOpcode( uint8_t inst, uint8_t* operands, size_t argc, ...
  * :param name - register name (r00-r31)
  *
  */
-static const uint8_t toRegCode( const char* name )
+// static const uint8_t toRegCode( const char* name )
+// {
+// 	uint8_t reg = (uint8_t)atoi(name + sizeof(char));
+// 	return reg;
+// }
+
+static void assertTokenMatch( token_t type, Token* token )
 {
-	uint8_t reg = (uint8_t)atoi(name + sizeof(char));
-	return reg;
+	if ( token->type != type )
+		std::cerr << ;
+	// std::cerr << 
 }
 
 
@@ -135,53 +155,85 @@ static const uint8_t toRegCode( const char* name )
  * :param end - pointer to the end of the file stream
  *
  */
-static void parse ( const char* stream, const char* end )
+static void assemble ( const char* stream, const char* end, std::ostream& os )
 {
-	const char* start = stream;
-
-	// read the first instruction from the stream
-	auto next_token = getNextToken( &stream );
-
-	// std::cout << next_token->str << std::endl;
+	Token* token = new Token();
 
 	do
 	{
-		if ( next_token->type == WORD ) 
+		// read the next instruction from the stream
+		getNextToken(&stream,token);
+
+		switch ( token->type )
 		{
-			if ( !strcmp(next_token->str,"pop") ) // opcodes 0 through 3
+			// case LABEL :
+			// case ATSIGN :
+			case WORD :
 			{
-				uint8_t opcode = 0;
-				auto operand = getNextToken( &stream );
+				// convert the token into an operation_t
+				operation_t op = str2op(token->str);
 
-				if ( operand->type == WORD )
+				switch ( op )
 				{
-					uint8_t reg = toRegCode(operand->text);
-					opcode++; // opcode 1
+					case PUSH :
+
+						// Register name
+						getNextToken(&stream,token);
+						assertTokenMatch(WORD,token`);
+
+						// Comma
+						getNextToken(&stream,token);
+						assertTokenMatch(COMMA,token);
+
+						// Immediate or Register
+						getNextToken(&stream,token);
+						assertTokenMatch(NUMBER|WORD,token);
+
+						break;
+					case POP :
+						getNextToken(&stream,token);
+						if ( token->type == WORD )
+
+						break;
+					case MOV :
+						break;
+					default :
+						// std::cerr << sprintf((char*)"Unexpected token %s.",token->str);
+						break;
 				}
-				if ( operand->type == NUMBER )
+
+				break;
+			}
+			case SEMI :
+				// consume comments
+				do
 				{
-					uint8_t reg = toRegCode(optext);
-					opcode+=2; // opcode 2
-					// TODO
+					getNextToken(&stream, token);
 				}
-
-				// uint8_t opcode = toOpcode( 0,   );
-			}
-			if ( !strcmp(text,"push") ) // opcode 00 0001
-			{
-
-			}
-			if ( !strcmp(text,"add") ) // opcode 00 0010
-			{
-
-			}
-			// "mov", "pop", "push", "add", "sub", "mul", "div"
+				while ( token->type != ENDL && token->type != HALT );
+				break;
+			default : 
+				break;
 		}
+	}
+	while ( token->type != HALT );
+}
 
+static void read_asm( std::istream& is, std::ostream& os )
+{
+	// read the entire file into a C string
+	is.seekg(0, std::ifstream::end);
+	size_t file_size = is.tellg();
+	is.seekg(0);
+	char buffer[ file_size ];
+	is.read(buffer,file_size);
 
+	// start at the beginning of the file
+	char* stream = &buffer[0]; 
+	char* end = &buffer[file_size];
 
-	} while( stream < end );
-
+	// begin parsing the file
+	assemble( stream, end, os );
 }
 
 
@@ -189,30 +241,17 @@ int main(int argc, char **argv)
 {
 	// no input arguments
 	if ( argc != 2 ) 
-	{
 		std::cerr << "LEX: error: no input files.\n"; 
-	}
 	
 	// input arguments
 	else 
 	{
 		std::ifstream is( argv[1], std::ios::in | std::ios::binary );
-		if ( is )
+		std::ofstream os( "bytecode", std::ios::out | std::ios::binary );
+		if ( is && os )
 		{
-			// read the entire file into a C string
-			is.seekg(0, std::ifstream::end);
-			size_t file_size = is.tellg();
-			is.seekg(0);
-			char buffer[ file_size ];
-			is.read(buffer,file_size);
-
-			// start at the beginning of the file
-			char* stream = &buffer[0]; 
-			char* end = &buffer[file_size];
-
-			// begin parsing the file
-			parse( stream, end );
-
+			read_asm(is,os);
+			os.close();
 			is.close();
 		}
 		else
