@@ -1,57 +1,60 @@
-Virtue
-===
+SIMD instructions for Node.js
 
-####Instruction serialization schema
-
-This is a "Pseudo-SIMD" instruction set in that it embodies the definition of Singular Instruction Multiple Data.  However the serialized instructions bear no resembelance to actual SIMD instructions whatsoever.
-
-_OPCODE_ 
-	- determines which instruction
-	- the opcode determines the number of operands for which to look (0, 1 or 2)
-	- 6 bits
-	- there are 64 possible instructions
-
-_R/I/M_ 
-	- determine whether the first operand is a register, immediate or memory address
-	- 2 bits
-	- 0 = register
-	- 1 = immediate
-	- 2 = memory
-
-_REGISTER_
-	- only present if the R/I/M field designates that the operand is a register 
-	- a number between 0 and 31 determining which register r00-r31 is used
-
-_MEMORY_
-	- a memory address
-	- 4B possible addresses == 4GB of memory
+SIMD Object with the properties:
 
 
-Operand/Opcode Lookup Table
-===
+<!-- 128bit  -->
+Float32x4
+Float32x2
 
-####push
-The only parameter to push may be any register, memory or immediate value to be placed on the top of the stack.
+<!-- 256bit SSE -->
+Float64x4
+Float32x8
+Int32x8
+Int64x4
 
-```
-push_imm - opcode 0
-push_mem - opcode 1
-push_reg - opcode 2
-```
 
-####pop
-Pop always takes a register as the first operand; the second operand may be any register, memory or immediate value designating the size to pop off the stack.
-```
-pop_reg_imm - opcode 3
-pop_reg_mem - opcode 4
-pop_reg_reg - opcode 5
-```
+<!-- Arrays -->
+Float64SIMDArray
+Float32SIMDArray
+Int64SIMDArray
+Int32SIMDArray
+Int16SIMDArray
+Int8SIMDArray
+Uint64SIMDArray
+Uint32SIMDArray
+Uint16SIMDArray
+Uint8SIMDArray
+
+<!-- Functions -->
+mul
+add
+sub
+
+shuffle
 
 
 
+<!-- 
+
+ -->
 
 
+simd.h
+	namespace SIMD
 
+	math.h
+		SIMD::mul
+		SIMD::dot
+		SIMD::sub
+		SIMD::add
+	array.h
+		SIMD::Array
+		SIMD::ArrayWrapper
+	types.h
+		SIMD::Type
+		SIMD::TypeWrapper
+	memalign.h
 
 
 

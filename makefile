@@ -5,7 +5,7 @@ cxxflags = -std=c++11 -Wall -msse4 -march=core-avx-i
 # -O3
 
 # vector
-src = vector.cpp test.cpp
+src = test.cpp
 target = 
 
 # assembler
