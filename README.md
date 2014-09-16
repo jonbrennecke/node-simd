@@ -34,6 +34,18 @@ sub
 shuffle
 
 
+new Float64x4(1,2,3,4);
+
+var reg = new Float64x4();
+reg.set()
+
+reg.a
+reg.b
+reg.c
+reg.d
+
+
+
 
 <!-- 
 
