@@ -1,0 +1,1 @@
+cmd_Release/simd.node := ./gyp-mac-tool flock ./Release/linker.lock c++ -bundle -stdlib=libc++ -Wl,-search_paths_first -mmacosx-version-min=10.7 -arch x86_64 -L./Release  -o Release/simd.node Release/obj.target/simd/simd.o -undefined dynamic_lookup

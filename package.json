@@ -1,0 +1,18 @@
+{
+  "name": "virtue",
+  "version": "0.0.0",
+  "description": "SIMD instructions for Node.js",
+  "main": "simd.js",
+  "scripts": {
+    "start": "node --harmony test.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "install": "node-gyp rebuild"
+  },
+  "repository": {
+    "type": "git",
+    "url": "jon:virtue"
+  },
+  "author": "",
+  "license": "MIT",
+  "gypfile": true
+}
