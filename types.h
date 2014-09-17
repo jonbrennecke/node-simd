@@ -42,6 +42,7 @@ class SIMDType
 public:
 	SIMDType(){}
 
+	// constructor from an initializer_list
 	SIMDType( std::initializer_list<T> list )
 	{
 		// convert the initializer_list into an alligned block of memory and load it into the register
@@ -49,8 +50,10 @@ public:
 		ALIGNED_MALLOC(tmp,32,list.size() * sizeof(T));
 		std::copy(list.begin(),list.end(),tmp);
 		this->register_ = _mm_load(tmp);
+		this->length_ = list.size();
 	}
 
+	// constructor from a vector
 	SIMDType( std::vector<T> vec )
 	{
 		// convert the vector into an alligned block of memory and load it into the register
@@ -58,8 +61,10 @@ public:
 		ALIGNED_MALLOC(tmp,32,vec.size() * sizeof(T));
 		std::copy(vec.begin(),vec.end(),tmp);
 		this->register_ = _mm_load(tmp);
+		this->length_ = vec.size();
 	}
 
+	// constructor from a vector
 	SIMDType( T* arrayptr, size_t size )
 	{
 		// convert the array into an alligned block of memory and load it into the register
@@ -67,14 +72,20 @@ public:
 		ALIGNED_MALLOC(tmp,32,size * sizeof(T));
 		std::copy(arrayptr,arrayptr + size,tmp);
 		this->register_ = _mm_load(tmp);
+		this->length_ = size;
 	}
 
 	~SIMDType(){}
 
-	void set( std::vector<T> vec )
+	size_t length() const
 	{
-
+		return this->length_;
 	}
+
+	// void set( std::vector<T> vec )
+	// {
+	// TODO
+	// }
 
 	// array operators
 	const T operator[] ( size_t i ) const { return this->register_[i]; }
@@ -82,6 +93,11 @@ public:
 
 private:
 	R register_;
+
+	// we're calling this 'length' because of Javascript conventions, 
+	// even though the convention in the C++ STL is to 'size' for the 
+	// number of elements in a container
+	size_t length_; 
 };
 
 #endif

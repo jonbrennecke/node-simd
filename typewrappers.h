@@ -64,11 +64,25 @@ public:
 	static Handle<Value> Set(const Arguments& args)
 	{
 		HandleScope scope;
-		// size_t index = (size_t)args[0]->IsUndefined() ? 0 : args[0]->NumberValue();
-		SIMDTypeWrapper<T> *self = node::ObjectWrap::Unwrap<SIMDTypeWrapper<T>>(args.This());
 
-		
-		
+		SIMDTypeWrapper<T,T> *self = node::ObjectWrap::Unwrap<SIMDTypeWrapper<T,R>>(args.This());
+
+		for (int i = 0; i < args.Length(); ++i)
+			self[i] = (T)args[i]->IsUndefined() ? 0 : args[i]->NumberValue();
+
+		return scope.Close( True() );
+	}
+
+	/**
+	 *
+	 * Return the array value at an index
+	 *
+	 */
+	static Handle<Value> Get(const Arguments& args)
+	{
+		HandleScope scope;
+		SIMDTypeWrapper<T,T> *self = node::ObjectWrap::Unwrap<SIMDTypeWrapper<T,R>>(args.This());
+		size_t index = (size_t)args[0]->IsUndefined() ? 0 : args[0]->NumberValue();
 		return scope.Close( index < self->length() ? Number::New(self->elems[index]) : Undefined() );
 	}
 
@@ -80,12 +94,10 @@ public:
 		tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
 		// prototype
-		// tpl->PrototypeTemplate()->Set(String::NewSymbol("get"),
-		// 	FunctionTemplate::New(SIMDTypeWrapper::Get)->GetFunction());
-		// tpl->PrototypeTemplate()->Set(String::NewSymbol("set"),
-		// 	FunctionTemplate::New(SIMDTypeWrapper::Set)->GetFunction());
-		// tpl->PrototypeTemplate()->Set(String::NewSymbol("length"),
-		// 	FunctionTemplate::New(SIMDTypeWrapper::Length)->GetFunction());
+		tpl->PrototypeTemplate()->Set(String::NewSymbol("get"),
+			FunctionTemplate::New(SIMDTypeWrapper::Get)->GetFunction());
+		tpl->PrototypeTemplate()->Set(String::NewSymbol("set"),
+			FunctionTemplate::New(SIMDTypeWrapper::Set)->GetFunction());
 
 		SIMDTypeWrapper<T,R>::constructor = Persistent<Function>::New(tpl->GetFunction());
 		exports->Set(String::NewSymbol(name), SIMDTypeWrapper<T,R>::constructor);
